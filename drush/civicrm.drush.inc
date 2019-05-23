@@ -1400,7 +1400,7 @@ function _civicrm_dsn_init($reset = FALSE) {
         $globalDbUrl = $GLOBALS['databases'][$database][$target];
       }
       // Now modify $GLOBALS so that drush works on CIVICRM_DSN instead of drupal's.
-      $GLOBALS['databases'][$database][$target] = drush_convert_db_from_db_url(CIVICRM_DSN);
+      $GLOBALS['databases'][$database][$target] = Commands::drush_convert_db_from_db_url(CIVICRM_DSN);
     }
   }
   else {
