@@ -3,16 +3,15 @@
 namespace Drupal\civicrm\Commands;
 
 //USE Drupal\civicrm\Controller\CivicrmController;
-use Drush\Commands\DrushCommands;
 use Drush\Commands\sql\SqlCommands;
 use Symfony\Component\Console\Input\InputInterface;
-use Drupal\Core\Database\Database;
 use Drush\Sql\SqlBase;
 
 /**
  * Drush commandfile for CiviCRM
+ * TODO: This will probably only contain the SQL commands.
  */
-class CivicrmCommands extends DrushCommands {
+class CivicrmCommands extends SqlCommands {
 
   /**
    * Set to TRUE if CiviCRM is initialized.
@@ -29,6 +28,25 @@ class CivicrmCommands extends DrushCommands {
   private $dbObject;
 
   /**
+   * An array of options that can be passed to  SqlBase::create to reference the CiviCRM database.
+   *
+   * @var array
+   */
+  private $civiDbOptions;
+
+  /**
+   * Print CiviCRM database connection details
+   *
+   * @command civicrm:sql-conf
+   * @option show-passwords Show database password.
+   */
+  public function drush_civicrm_sqlconf() {
+    $this->civicrm_dsn_init();
+    $options = array_merge(['format' => 'yaml', 'all' => false, 'show-passwords' => false], $this->civiDbOptions);
+    return $this->conf($options);
+  }
+
+  /**
    * A string for connecting to the CiviCRM DB.
    *
    * @command civicrm:sql-connect
@@ -36,8 +54,8 @@ class CivicrmCommands extends DrushCommands {
    */
   public function drush_civicrm_sqlconnect() {
     $this->civicrm_dsn_init();
-    // SqlCommands::connect($this->civicrmConnectionInfo);
-    return $this->dbObject->connect(FALSE);
+    
+    return $this->connect($this->civiDbOptions);
   }
 
   /**
@@ -53,12 +71,6 @@ class CivicrmCommands extends DrushCommands {
    *   Display 'Hello Akanksha!' and a message.
    */
   public function drush_civicrm_sqldump($name, $options = ['msg' => FALSE]) {
-    if ($options['msg']) {
-      $this->output()->writeln('Hello ' . $name . '! This is your first Drush 9 command.');
-    }
-    else {
-      $this->output()->writeln('Hello ' . $name . '!');
-    }
   }
 
   /**
@@ -70,25 +82,19 @@ class CivicrmCommands extends DrushCommands {
    */
   public function drush_civicrm_sqlcli(InputInterface $input) {
     $this->civicrm_dsn_init();
-$temp = new sqlCommands;
-    $temp->cli($input);
+    $this->cli($input, $this->civiDbOptions);
   }
 
   private function civicrm_dsn_init() {
     if (!$this->civicrm_init()) {
       return FALSE;
     }
-    $options = [
+    $this->civiDbOptions = [
       'database' => 'civicrm',
       'target' => 'default',
       'db-url' => CIVICRM_DSN,
     ];
-    $this->dbObject = SqlBase::create($options);
-/*
-    Database::addConnectionInfo('civicrm', 'default', Database::convertDbUrlToConnectionInfo(CIVICRM_DSN, DRUPAL_ROOT));
-    Database::setActiveConnection('civicrm');
-    $this->civicrmConnectionInfo['civicrm'] = Database::getConnectionInfo('civicrm');
-*/
+    $this->dbObject = SqlBase::create($this->civiDbOptions);
   }
 
   private function civicrm_init() {
