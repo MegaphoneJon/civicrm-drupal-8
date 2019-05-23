@@ -54,7 +54,6 @@ class CivicrmCommands extends SqlCommands {
    */
   public function drush_civicrm_sqlconnect() {
     $this->civicrm_dsn_init();
-    
     return $this->connect($this->civiDbOptions);
   }
 
@@ -141,35 +140,13 @@ class CivicrmCommands extends SqlCommands {
   }
 
   private function civicrm_dsn_init() {
-    if (!$this->civicrm_init()) {
-      return FALSE;
-    }
+    \Drupal::service('civicrm')->initialize();
     $this->civiDbOptions = [
       'database' => 'civicrm',
       'target' => 'default',
       'db-url' => CIVICRM_DSN,
     ];
     $this->dbObject = SqlBase::create($this->civiDbOptions);
-  }
-
-  private function civicrm_init() {
-    // TODO: How to tell when the file is in sites/something_else?
-    $civicrmSettingsFile = DRUPAL_ROOT . "/sites/default/civicrm.settings.php";
-    if (!is_file($civicrmSettingsFile)) {
-      $this->logger()->error("Could not locate civicrm.settings.php at $civicrmSettingsFile.");
-      return FALSE;
-    }
-    include_once $civicrmSettingsFile;
-    global $civicrm_root;
-    if (!is_dir($civicrm_root)) {
-      $this->logger()->error('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.');
-      return FALSE;
-    }
-    \CRM_Core_ClassLoader::singleton()->register();
-    // Also initialize config object.
-    \CRM_Core_Config::singleton();
-    $this->init = TRUE;
-    return $this->init;
   }
 
 }
